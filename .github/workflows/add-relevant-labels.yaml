@@ -1,0 +1,11 @@
+name: Pull request label
+
+on:
+  pull_request:
+    types: [labeled, unlabeled]
+
+jobs:
+  on-label-update:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'A review from octo-team was requested'

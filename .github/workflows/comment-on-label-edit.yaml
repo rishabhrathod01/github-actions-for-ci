@@ -1,0 +1,39 @@
+name: Label Comment on PR
+
+on:
+  pull_request:
+    types:
+      - labeled
+      - unlabeled
+
+jobs:
+  add_comment:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Add label comment
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pr_number=$(jq -r ".pull_request.number" $GITHUB_EVENT_PATH)
+          labels=$(jq -r ".pull_request.labels[].name" $GITHUB_EVENT_PATH | paste -sd ", ")
+
+          if [[ $labels ]]; then
+            action="added"
+          else
+            action="removed"
+          fi
+
+          comment="Labels $action: $labels"
+
+          echo "$comment"
+
+          # Add the comment to the PR
+          curl -X POST \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -d "{\"body\": \"$comment\"}" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${pr_number}/comments"
